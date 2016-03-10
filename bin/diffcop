@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require 'diff_cop'
+
+DiffCop.new.start.print!

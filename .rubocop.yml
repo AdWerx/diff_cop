@@ -1,0 +1,31 @@
+inherit_from: https://raw.githubusercontent.com/houndci/hound/master/config/style_guides/ruby.yml
+Style/DotPosition:
+  Description: Checks the position of the dot in multi-line method calls.
+  StyleGuide: https://github.com/bbatsov/ruby-style-guide#consistent-multi-line-chains
+  Enabled: true
+  EnforcedStyle: trailing
+  SupportedStyles:
+  - leading
+  - trailing
+Style/PercentLiteralDelimiters:
+  Description: Use `%`-literal delimiters consistently
+  StyleGuide: https://github.com/bbatsov/ruby-style-guide#percent-literal-braces
+  Enabled: false
+  PreferredDelimiters:
+    "%": "()"
+    "%i": "()"
+    "%q": "()"
+    "%Q": "()"
+    "%r": "{}"
+    "%s": "()"
+    "%w": "()"
+    "%W": "()"
+    "%x": "()"
+Style/StringLiterals:
+  Description: Checks if uses of quotes match the configured preference.
+  StyleGuide: https://github.com/bbatsov/ruby-style-guide#consistent-string-literals
+  Enabled: true
+  EnforcedStyle: single_quotes
+  SupportedStyles:
+  - single_quotes
+  - double_quotes

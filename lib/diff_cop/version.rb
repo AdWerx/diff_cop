@@ -1,3 +1,3 @@
-module DiffCop
-  VERSION = "0.1.0"
+class DiffCop
+  VERSION = '0.1.0'.freeze
 end
