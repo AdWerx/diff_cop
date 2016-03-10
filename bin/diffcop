@@ -2,4 +2,4 @@
 
 require 'diff_cop'
 
-DiffCop.new.start.print!
+exit DiffCop.new.start.print! ? 0 : 1

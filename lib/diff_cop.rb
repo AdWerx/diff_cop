@@ -9,7 +9,10 @@ class DiffCop
   def start
     @patches = generate_patches.group_by(&:file)
     @raw_lint_results = parsed_raw_lint_results(patches.keys)
-    @lint_results = filter_raw_lint_results(raw_lint_results['files'], patches)
+    @lint_results = filter_raw_lint_results(
+      raw_lint_results['files'] || [],
+      patches
+    )
 
     self
   end
@@ -18,21 +21,10 @@ class DiffCop
   # to stdout (CLI)
   def print!
     fail 'must run #start before printing' unless @lint_results
-    messages = @lint_results.flat_map do |(file_path, offenses)|
-      offense_line_map = offenses.group_by { |o| o['location']['line'] }
-      offense_line_map.map do |(line_no, line_offenses)|
-        <<-MSG
-#{file_path}:#{line_no}:
-
-    #{line_offenses.first['content']}
-    #{line_offenses.map { |o| o['message'] }.join("\n    ")}
-        MSG
-      end
-    end
 
     if @lint_results.empty?
       puts "\nYou're good! Rubocop has no offenses to report.\n"
-      exit 0
+      return true
     end
 
     puts <<-MSG
@@ -40,11 +32,11 @@ class DiffCop
 DiffCop Offenses:
 =====================
 
-#{messages.join("\n\n")}
+#{generate_messages.join("\n\n")}
 
 MSG
 
-    exit 1
+    false
   end
 
   private
@@ -68,18 +60,14 @@ MSG
   end
 
   # json-parsed rubocop results
-  def parsed_raw_lint_results(*files)
+  def parsed_raw_lint_results(files)
+    return {} unless files.any?
     JSON.parse(`rubocop -R #{files.join(' ')} --format json`)
   end
 
-  # do the provided patches include the given line number?
-  def patches_include_line_number?(file_patches, line_number)
-    file_patches.flat_map(&:changed_line_numbers).include?(line_number)
-  end
-
   # get the line content from the patch containing the provided line number
-  def get_line_content(file_patches, line_number)
-    find_patch_for_line_number(file_patches, line_number).
+  def get_line_content(patch, line_number)
+    patch.
       changed_lines.
       detect { |line| line.number == line_number }.
       instance_variable_get(:@content)
@@ -89,6 +77,22 @@ MSG
   def find_patch_for_line_number(file_patches, line_number)
     file_patches.detect do |patch|
       patch.changed_line_numbers.include?(line_number)
+    end
+  end
+
+  def generate_messages
+    @lint_results.flat_map do |(file_path, offenses)|
+      offenses.
+        group_by { |o| o['location']['line'] }.
+        map do |(line_no, line_offenses)|
+          line_content = get_line_content(line_offenses.first['patch'], line_no)
+          <<-MSG
+#{file_path}:#{line_no}:
+
+    #{line_content}
+    #{line_offenses.map { |o| o['message'] }.join("\n    ")}
+          MSG
+        end
     end
   end
 
@@ -103,14 +107,12 @@ MSG
       file_patches = all_patches.fetch(result['path'])
 
       relevant_offenses = result['offenses'].select do |offense|
-        line_no = offense['location']['line']
-        next false unless patches_include_line_number?(file_patches, line_no)
-        offense['content'] = get_line_content(file_patches, line_no)
+        offense['patch'] =
+          find_patch_for_line_number(file_patches, offense['location']['line'])
       end
 
       memo[result['path']] = relevant_offenses if relevant_offenses.any?
       memo
     end
   end
-
 end
