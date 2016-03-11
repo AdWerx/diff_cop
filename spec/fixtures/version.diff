@@ -1,0 +1,12 @@
+diff --git a/lib/diff_cop/version.rb b/lib/diff_cop/version.rb
+index ede38dd..e7e71a3 100644
+--- a/lib/diff_cop/version.rb
++++ b/lib/diff_cop/version.rb
+@@ -1,3 +1,6 @@
+ class DiffCop
+-  VERSION = '0.1.0'.freeze
++  VERSION =       '0.1.0'.freeze
++
++  def some_method( args)
++    end
+ end
